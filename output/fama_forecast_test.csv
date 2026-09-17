@@ -1,0 +1,7 @@
+case,signal_month,window_end,sp500_at_signal,trough_month,sp500_at_trough,price_change_pct,with_dividends_pct,price_level_regained
+"Calibration: Shiller's Dec-1996 warning (Fama, 2014, p. 1476)",1996-12,2003-12,743,1997-04,764,2.8,3.3,1997-05
+"Comparison: GSADF dot-com origination (Phillips et al., 2015, p. 1066)",1995-11,2003-12,596,1996-01,614,3.2,3.4,1996-02
+BIS episode 1: first warning,1999-07,2003-07,1381,2003-02,837,-39.4,-36.3,2006-11
+BIS episode 1: peak,2000-02,2004-02,1389,2003-02,837,-39.7,-37.1,2006-12
+BIS episode 2: first warning,2020-08,2024-08,3392,2020-09,3366,-0.8,-0.6,2020-10
+BIS episode 2: peak,2020-12,2024-12,3695,2022-10,3726,0.8,2.8,2022-11

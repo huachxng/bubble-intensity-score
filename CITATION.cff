@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the working paper below."
+title: "Bubble Intensity Score (BIS): replication code"
+type: software
+authors:
+  - family-names: Tejahempinyo
+    given-names: Sasipat
+version: "1.0"
+date-released: "2026-09-17"
+repository-code: "https://github.com/huachxng/bubble-intensity-score"
+license: MIT
+preferred-citation:
+  type: unpublished
+  title: "The Bubble Intensity Score: A Composite Index for Situating the AI Market Among Historical Bubbles"
+  authors:
+    - family-names: Tejahempinyo
+      given-names: Sasipat
+  year: 2026
+  notes: "Working paper"
