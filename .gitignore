@@ -1,16 +1,20 @@
-# RStudio / R session files
+# RStudio and R session files
 .Rproj.user/
 .Rhistory
 .RData
 .Ruserdata
 .DS_Store
 
-# Paper drafts live in the Google Doc, not in the code repository
+# Local drafts, not part of the package
 doc-sections/
 
-# Raw caches that are not ours to redistribute — run_all.R downloads them on first run
+# Results of a refresh run (Rscript run_all.R --refresh) and of the v0.1 prototype
+latest/
+output/v0.1/
+
+# Raw files that are not ours to redistribute; their monthly series are in
+# data-clean/, and the refresh run downloads new copies into latest/raw/
 data-raw/fred_VIXCLS.csv
 data-raw/fred_NASDAQCOM.csv
 data-raw/multpl_cape.csv
-# Geopolitical Risk index: download from https://www.matteoiacoviello.com/gpr.htm (cite the download date)
 data-raw/data_gpr_export.xls

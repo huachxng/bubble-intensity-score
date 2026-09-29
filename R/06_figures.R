@@ -1,13 +1,7 @@
-# =====================================================================
-# BIS v1.0  —  06_figures.R      Every exhibit in the paper
-# =====================================================================
-# No TODOs. Identical in R/ and R/solutions/.
-# Everything lands in output/figures/ at 160 dpi, ready to drop into the
-# Google Doc. Figure 5 replaces the borrowed investing.com image with an
-# original one, which matters for a paper you are submitting.
-# =====================================================================
+# 06_figures.R: the paper's figures, written to output/figures/ at 160 dpi,
+# and the three-way comparison table.
 
-message("FIGURES  [", BIS_VERSION, "]")
+message("\n== 06 figures (", BIS_VERSION, ")")
 
 as_date <- function(m) as.Date(paste0(m, "-01"))
 
@@ -30,7 +24,7 @@ EPISODES <- tibble(
   xmax  = as_date(c("2003-12", "2010-12", max(panel$month)))
 )
 
-# ---- Fig 1: the BIS across the whole history -------------------------
+# ---- Figure 1: the BIS since 1995 ----------------------------------------------
 p1 <- panel %>%
   filter(month >= "1995-01", !is.na(BIS)) %>%
   mutate(d = as_date(month)) %>%
@@ -52,7 +46,7 @@ p1 <- panel %>%
   THEME
 save_fig(p1, "fig_bis_history.png")
 
-# ---- Fig 2: pillar decomposition, one file per window ----------------
+# ---- Figures 2a-2c: pillar decomposition, one file per window ----------------
 for (nm in WINDOWS$name) {
   d <- bis_windows %>% filter(window == nm)
   p <- d %>%
@@ -61,7 +55,7 @@ for (nm in WINDOWS$name) {
     mutate(d = as_date(month)) %>%
     ggplot(aes(d, z, colour = pillar)) +
     geom_hline(yintercept = 0, colour = "grey60", linewidth = .3) +
-    geom_line(linewidth = .65) +
+    geom_line(linewidth = .65, na.rm = TRUE) +   # a pillar can be missing in the newest month
     geom_line(data = d %>% mutate(d = as_date(month)),
               aes(d, BIS), inherit.aes = FALSE,
               colour = "black", linewidth = .9, linetype = "solid") +
@@ -73,7 +67,9 @@ for (nm in WINDOWS$name) {
   save_fig(p, paste0("fig_pillars_", nm, ".png"))
 }
 
-# ---- Fig 3: the three-way comparison (the money shot) ----------------
+# ---- Figure 3: the three-way comparison ----------------------------------------
+# Signature month: the BIS peak for Dot-com and the AI era, the leverage
+# pillar's peak for the GFC.
 signature_month <- function(nm) {
   d <- bis_windows %>% filter(window == nm)
   if (nm == "gfc") which_max_month(d$month, d$L) else which_max_month(d$month, d$BIS)
@@ -88,22 +84,29 @@ threeway <- purrr::map_dfr(WINDOWS$name, function(nm) {
 readr::write_csv(threeway, file.path(DIR_OUT, "bis_comparison_table.csv"))
 cat("\n--- three-way comparison ---\n"); print(threeway %>% select(-window))
 
+EPISODE_LABELS <- c(dotcom = "Dot-com", gfc = "GFC", ai = "AI era")   # chronological order
+month_label <- function(m) paste(month.abb[as.integer(substr(m, 6, 7))], substr(m, 1, 4))
+
 p3 <- threeway %>%
-  select(episode, V, L, S, C) %>%
-  pivot_longer(-episode, names_to = "pillar", values_to = "z") %>%
+  mutate(panel_label = factor(EPISODE_LABELS[window], levels = EPISODE_LABELS)) %>%
+  select(panel_label, V, L, S, C) %>%
+  pivot_longer(-panel_label, names_to = "pillar", values_to = "z") %>%
   mutate(pillar = factor(pillar, levels = c("V", "L", "S", "C"))) %>%
   ggplot(aes(pillar, z, fill = pillar)) +
   geom_hline(yintercept = 0, colour = "grey40", linewidth = .4) +
   geom_col(width = .7) +
-  facet_wrap(~episode, nrow = 1) +
+  facet_wrap(~panel_label, nrow = 1) +
   scale_fill_manual(values = PAL, guide = "none") +
-  labs(title = "Pillar profile at each episode's signature month",
-       subtitle = "Same height on V and C, opposite sign on L: expensive like 1999, not fragile like 2007",
+  labs(title = "Pillar profile of the three episodes",
+       subtitle = paste0("Pillar z-scores at each episode's signature month: ",
+                         paste(EPISODE_LABELS[threeway$window], month_label(threeway$month),
+                               collapse = ", ")),
+       caption = "Signature month: the composite's peak for Dot-com and the AI era, the leverage pillar's peak for the GFC.",
        x = NULL, y = "z-score") +
   THEME
 save_fig(p3, "fig_threeway.png", w = 10, h = 4.5)
 
-# ---- Fig 4: what GPR did to the sentiment pillar (v1.0 only) ---------
+# ---- Figure 4: the sentiment pillar with and without GPR (v1.0 only) ----------
 if (BIS_VERSION != "v0.1" && "s_gpr_adj" %in% names(panel)) {
   p4 <- panel %>%
     filter(month >= "1995-01") %>%
@@ -123,15 +126,13 @@ if (BIS_VERSION != "v0.1" && "s_gpr_adj" %in% names(panel)) {
   save_fig(p4, "fig_sentiment_v2.png")
 }
 
-# ---- Fig 5: catalyst timeline (for Indicator 5, External Shock) ------
-# Every build-up needed a pin. This makes that argument visually, and it is
-# an ORIGINAL figure - it replaces the borrowed investing.com chart.
+# ---- Catalyst timeline: S&P 500 with three external triggers ---------------------
 CATALYSTS <- tibble(
   d = as.Date(c("1973-10-01", "2000-03-01", "2008-09-01")),
   label = c("1973 oil embargo", "2000 Fed tightening", "2008 Lehman")
 )
 
-p5 <- raw_shill %>%
+p5 <- read_shiller() %>%
   filter(month >= "1970-01", !is.na(sp500)) %>%
   mutate(d = as_date(month)) %>%
   ggplot(aes(d, sp500)) +

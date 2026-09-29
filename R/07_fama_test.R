@@ -1,26 +1,23 @@
-# =====================================================================
-# BIS v1.0  —  07_fama_test.R      Fama's forecast-date test, applied to the BIS
-# =====================================================================
-# Not part of the TODO pipeline. Run it after run_all.R:
-#     source("R/07_fama_test.R")
+# 07_fama_test.R: Fama's forecast-date test applied to the BIS warning dates.
 #
 # Fama (2014, pp. 1476-1477) judges a bubble warning by the market's level on
-# the date of the FIRST warning: the warning only counts if prices later fell
-# below that level. Shiller's December 1996 warning fails his test. This script
-# applies the same test to the BIS's own warning dates — the strongest possible
-# form of the counterargument, answered with the index's own numbers.
+# the date of the first warning: the warning counts only if prices later fall
+# below that level. Shiller's December 1996 warning fails this test. The
+# script applies the same test to each BIS warning episode.
 #
-# Stand-in data: the S&P 500 from the Shiller file (monthly averages), where
-# Fama used the CRSP value-weight index on exact days. The calibration row
-# re-runs Fama's Shiller example so the substitution can be checked.
-# =====================================================================
+# Data: the S&P 500 from the Shiller file (monthly averages), where Fama used
+# the CRSP value-weighted index on exact days. The calibration row re-runs
+# Fama's Shiller example so the substitution can be checked.
+#
+# run_all.R runs this script last. On its own it reads the panel that
+# run_all.R wrote: source("R/07_fama_test.R").
 
-source("R/00_setup.R")
+if (!exists("DIR_OUT")) source("R/00_setup.R")
 
-sh <- readr::read_csv(file.path(DIR_RAW, "shiller_sp500.csv"), show_col_types = FALSE) %>%
-  transmute(month = format(as.Date(Date), "%Y-%m"),
-            P = as.numeric(SP500),
-            D = as.numeric(Dividend)) %>%
+message("\n== 07 Fama forecast-date test")
+
+sh <- read_shiller() %>%
+  transmute(month, P = sp500, D = dividend) %>%
   filter(!is.na(P)) %>%
   arrange(month) %>%
   tidyr::fill(D, .direction = "down")
@@ -72,6 +69,7 @@ episodes <- hot %>%
             peak          = month[which.max(BIS)],
             .groups = "drop")
 
+# Each BIS warning is judged over the following 48 months (or to the end of the data).
 HORIZON_MONTHS <- 48
 
 fama_results <- bind_rows(

@@ -1,42 +1,18 @@
-# =====================================================================
-# BIS v1.0  —  05_backtest.R      The manual backtest + sensitivity
-# =====================================================================
-# YOUR CODE: 3 TODOs.
-#
-# STOP. Before you run this file, paste the five pre-registered criteria
-# below into the Google Doc. Stating them BEFORE you see the output is what
-# makes this a backtest rather than a story told after the fact — and it is
-# your direct answer to the "hindsight bias" objection in Chapter 5.
-# =====================================================================
+# 05_backtest.R: the pre-registered backtest scorecard, a hand check of one
+# month, and the weighting, lookback and GPR sensitivity tests.
 
-message("BACKTEST  [", BIS_VERSION, "]")
+message("\n== 05 backtest and sensitivity (", BIS_VERSION, ")")
 
-# ---------------------------------------------------------------------
-# THE PRE-REGISTERED CRITERIA
-# ---------------------------------------------------------------------
-# 1. Dot-com: BIS peaks within +/- 6 months of 2000-03 (Nasdaq top).
-# 2. Dot-com: that peak exceeds the 90th percentile of the full
-#    1985-present BIS distribution.
-# 3. GFC: the LEVERAGE pillar peaks within +/- 12 months of 2007-08
+# ---- Pre-registered criteria ----------------------------------------------------
+# 1. Dot-com: the BIS peaks within +/- 6 months of 2000-03 (Nasdaq top).
+# 2. Dot-com: that peak is above the 90th percentile of all BIS readings
+#    from 1985 on.
+# 3. GFC: the leverage pillar peaks within +/- 12 months of 2007-08
 #    (BNP Paribas freezes its funds, 2007-08-09).
-# 4. GFC: the composite BIS does NOT exceed +1.5 before the crash.
-#    (v0.1 max was +0.30. This one is written to be "failed" by the naive
-#    reading and passed by yours: the composite genuinely missed 2008,
-#    because 2008 was a credit crisis, not an equity-valuation bubble.
-#    Reporting that instead of re-tuning the index until it fits is the
-#    single most defensible thing in the paper. Do not quietly drop it.)
-# 5. AI era: NO pass/fail. The outcome is unknown; report level and pillar
-#    profile only. An index that "passes" on an unfinished episode is
-#    fitting, not testing.
-# ---------------------------------------------------------------------
+# 4. GFC: the composite BIS stays below +1.5 before the crash.
+# 5. AI era: reported, not scored; the outcome is not known.
 
-# =====================================================================
-# TODO 5.1 — peak finder
-# =====================================================================
-# For one window and one column, return the peak value and the month it
-# occurred in. Hints: which.max() gives the position of the maximum;
-# na.rm = TRUE on max(); index the month column with that position.
-# ---------------------------------------------------------------------
+# Peak value of one column in a window, and its month.
 peak_of <- function(df, col) {
   v <- df[[col]]
   if (all(is.na(v))) return(list(value = NA_real_, month = NA_character_))
@@ -48,21 +24,15 @@ peak_of <- function(df, col) {
   )
 }
 
-# =====================================================================
-# TODO 5.2 — where does a value sit in the whole distribution?
-# =====================================================================
-# Criterion 2 asks whether the Dot-com peak clears the 90th percentile of
-# every BIS reading 1985-present. Return the percentile rank of x, 0-100.
-# Hint: the share of non-NA observations at or below x, times 100.
-# ---------------------------------------------------------------------
+# Percentile rank (0-100) of x among the non-missing values.
 pct_rank <- function(x, all_values) {
   v <- all_values[!is.na(all_values)]
   if (length(v) == 0 || is.na(x)) return(NA_real_)
-  
+
   (sum(v <= x) / length(v)) * 100
 }
 
-# ---- Assemble the scorecard ------------------------------------------
+# ---- Scorecard ----------------------------------------------------------------------
 win <- function(nm) bis_windows %>% filter(window == nm)
 
 pk_dot   <- peak_of(win("dotcom"), "BIS")
@@ -70,17 +40,7 @@ pk_gfc_L <- peak_of(win("gfc"),    "L")
 pk_ai    <- peak_of(win("ai"),     "BIS")
 gfc_max  <- safe_max(win("gfc")$BIS)
 
-# =====================================================================
-# TODO 5.3 — evaluate criteria 1-4
-# =====================================================================
-# months_between("2000-05", "2000-03") is 2, and it is already written for
-# you in 00_setup.R. Use abs() on it. Criterion 4 passes when the GFC
-# composite maximum stays BELOW the danger line.
-#
-# Wrap each test in isTRUE(...). If a peak came back NA because an indicator
-# is missing, a bare if (NA > 6) throws an error; isTRUE(NA) is just FALSE,
-# so you get an honest FAIL you can go and investigate.
-# ---------------------------------------------------------------------
+# isTRUE() turns a missing value into FAIL instead of an error.
 scorecard <- tibble::tribble(
   ~criterion, ~target, ~observed, ~result,
 
@@ -103,7 +63,7 @@ scorecard <- tibble::tribble(
   "< 1.5",
   sprintf("%+0.2f", gfc_max),
   if_else(isTRUE(gfc_max < 1.5), "PASS", "FAIL"),
-  
+
   "5. AI era (reported, not scored)",
   "-",
   paste0(pk_ai$month, " (", sprintf("%+0.2f", pk_ai$value), ")"),
@@ -113,9 +73,10 @@ scorecard <- tibble::tribble(
 print(scorecard, n = Inf, width = Inf)
 readr::write_csv(scorecard, file.path(DIR_OUT, "backtest_scorecard.csv"))
 
-# =====================================================================
-# THE HAND CALCULATION — this is the "manual" in manual backtest
-# =====================================================================
+# ---- Hand check ----------------------------------------------------------------------
+# Prints, for month m, the number of values in the trailing window, their mean
+# and population SD and the resulting z-score, then the four pillars and
+# their average, so a reading can be redone on a calculator.
 hand_check <- function(m, series = ind_v1, label = "CAPE") {
   i  <- which(series$month == m)
   if (!length(i)) stop("month not in series: ", m)
@@ -141,16 +102,10 @@ hand_check <- function(m, series = ind_v1, label = "CAPE") {
   invisible(NULL)
 }
 
-hand_check("2000-03")   # expect z(CAPE) ~ +2.04, BIS ~ +1.81 under v0.1
+hand_check("2000-03")   # z(CAPE) = +2.04; BIS = +2.19 under v1.0, +1.80 under v0.1
 
-# =====================================================================
-# SENSITIVITY — the answer to "your weights are arbitrary"
-# =====================================================================
-# Complete, no TODO. What matters is whether the RANKING of the three
-# episodes survives, not whether the levels move. Watch the leverage-heavy
-# column: 2008 should climb sharply under it. That demonstrates the
-# weighting point instead of merely asserting it.
-# ---------------------------------------------------------------------
+# ---- Weighting sensitivity -----------------------------------------------------------
+# Peak BIS in each window when one pillar gets weight 0.40 and the others 0.20.
 WEIGHT_SETS <- list(
   equal            = c(V = .25, L = .25, S = .25, C = .25),
   valuation_heavy  = c(V = .40, L = .20, S = .20, C = .20),
@@ -186,9 +141,9 @@ sensitivity %>%
 
 readr::write_csv(sensitivity, file.path(DIR_OUT, "sensitivity.csv"))
 
-# ---- Lookback sensitivity (60 / 120 / 180 months) --------------------
-# Re-runs the whole z-score layer at other window lengths. Slow-ish; it is
-# recomputing six series three times. Fine to run once at the end.
+# ---- Lookback sensitivity (Table B2) ---------------------------------------------------
+# The one-indicator-per-pillar (v0.1) composite recomputed with 60-, 120- and
+# 180-month z-score windows; peak of each analysis window.
 lookback_sensitivity <- function(lookbacks = c(60, 120, 180)) {
   purrr::map_dfr(lookbacks, function(L) {
     zL <- function(df) { df %>% arrange(month) %>%
@@ -209,23 +164,16 @@ lookback_sensitivity <- function(lookbacks = c(60, 120, 180)) {
     })
   })
 }
-# lookback_sensitivity() %>% print(n = Inf)   # uncomment when you want it
 
-# =====================================================================
-# THE GPR VARIANCE TEST  (v1.0 only)
-# =====================================================================
-# Your stated reason for adding GPR was variance reduction. Prove it or
-# disprove it — either result is publishable, a disproved one honestly
-# reported is worth more than a fudged one.
-#
-# Expect: correlation well below 1 (VIX is market fear, GPR is newspaper-
-# counted geopolitical tension — different things), and therefore
-# sd(S_v2) < sd(S_old) in at least 2 of 3 windows.
-#
-# Expect also: GPR spikes at 2001-09 and 2022-03 will DENT the sentiment
-# score in those months (scary world -> less complacency). That is the
-# pillar behaving correctly. Describe it; don't hide it.
-# ---------------------------------------------------------------------
+lookback <- lookback_sensitivity()
+cat("\n--- lookback sensitivity (v0.1 pillars) ---\n")
+print(lookback, n = Inf)
+readr::write_csv(lookback, file.path(DIR_OUT, "lookback_sensitivity.csv"))
+
+# ---- GPR variance test (v1.0 only) --------------------------------------------------------
+# In each window: SD of the sentiment pillar with the VIX alone (S_old) and
+# with VIX and GPR averaged (S_v2), and the correlation of the two flipped
+# indicators.
 if (BIS_VERSION != "v0.1") {
   gpr_test <- purrr::map_dfr(WINDOWS$name, function(nm) {
     w  <- WINDOWS %>% filter(name == nm)

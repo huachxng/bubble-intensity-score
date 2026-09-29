@@ -1,26 +1,21 @@
-# =====================================================================
-# BIS v1.0  —  run_all.R      the whole pipeline, top to bottom
-# =====================================================================
-# Open bis-r.Rproj first, then either press Source on this file or run:
-#     source("run_all.R")
+# run_all.R: rebuild every table and figure of the paper.
 #
-# Which code runs is controlled by USE_SOLUTIONS in R/00_setup.R:
-#   FALSE -> your scripts in R/            (default)
-#   TRUE  -> the finished ones in R/solutions/
+#   Rscript run_all.R             reproduce the paper from data-clean/ (no internet needed)
+#   Rscript run_all.R --refresh   download the newest data and recompute everything in latest/
 #
-# Which pillar recipe is built is controlled by BIS_VERSION, same file:
-#   "v0.1" -> the Python prototype's four pillars. Build this FIRST and
-#             pass the Phase 4 regression test in 04.
-#   "v1.0" -> adds NFCI leverage to L and GPR to S.
-# =====================================================================
+# In an R session, run it from this folder with source("run_all.R"), or
+# BIS_REFRESH <- TRUE; source("run_all.R") for a refresh.
 
 source("R/00_setup.R")
 
-source_stage("01_load_raw.R")     # L0  raw -> data-raw/
-source_stage("02_build_panel.R")  # L1  clean -> data-clean/   (4 TODOs)
-source_stage("03_pillars.R")      # L2-4 panel, z-scores, pillars (3 TODOs)
-source_stage("04_bis.R")          # L5  composite + regression test (1 TODO)
-source_stage("05_backtest.R")     # backtest, hand check, sensitivity (3 TODOs)
-source_stage("06_figures.R")      # every exhibit
+if (REFRESH) {
+  source("R/01_load_raw.R")      # download the raw data into latest/raw/
+  source("R/02_build_panel.R")   # six monthly series into latest/clean/
+}
+source("R/03_pillars.R")         # z-scores, monthly panel, four pillars
+source("R/04_bis.R")             # composite index, analysis windows, v0.1 anchor check
+source("R/05_backtest.R")        # backtest scorecard, hand check, sensitivity tests
+source("R/06_figures.R")         # figures
+source("R/07_fama_test.R")       # Fama's forecast-date test
 
-message("\ndone. outputs in ", DIR_OUT, "/")
+message("\nDone. Results are in ", DIR_OUT, "/")
