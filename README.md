@@ -172,6 +172,14 @@ One result changed direction. Over the new AI window, adding the GPR to the sent
 - Three episodes is a small sample. The index is descriptive; it has not been validated as a forecasting model.
 - Refreshed results depend on revisions by the sources and on FRED being reachable, and the multpl.com table is read from a web page whose layout can change.
 
+## Acknowledgments
+
+Advisors:
+
+- Pimnara Hirankasi, Ph.D.
+- Wendy N. Moore, Ph.D.
+- Nattharmma Namfah (revision)
+
 ## How to cite
 
 GitHub's "Cite this repository" button uses `CITATION.cff`. In text:
