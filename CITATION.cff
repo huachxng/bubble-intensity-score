@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: Tejahempinyo
     given-names: Sasipat
-version: "1.1.0"
-date-released: "2026-09-29"
+version: "1.2.0"
+date-released: "2026-10-05"
 repository-code: "https://github.com/huachxng/bubble-intensity-score"
 license: MIT
 preferred-citation:

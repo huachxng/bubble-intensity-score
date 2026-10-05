@@ -55,7 +55,9 @@ fama_test <- function(case, signal, horizon_end) {
 # ---- The BIS's warning episodes, read from the pipeline output ---------
 # An episode is a run of months at or above the danger line; runs less than a
 # year apart are one episode. Each episode is tested twice: at its first
-# warning month and at its peak.
+# warning month and at its peak. With the paper's data there are two: episode
+# 1 is the Dot-com warning (1999-2000) and episode 2 the warning of August and
+# December 2020, in the pandemic period, before the AI window opens.
 panel_bis <- readr::read_csv(file.path(DIR_OUT, "bis_panel_monthly.csv"), show_col_types = FALSE) %>%
   select(month, BIS) %>%
   filter(month >= "1995-01", !is.na(BIS)) %>%

@@ -40,6 +40,21 @@ bis_windows %>%
             latest   = round(last(BIS), 2), .groups = "drop") %>%
   print(width = Inf)
 
+# ---- Signature month of the AI era ------------------------------------------------------
+# The AI window is still open and has no peak to report, so it is read at the
+# latest month in which all four pillars have a value and the sentiment pillar
+# has both of its indicators (VIX and GPR; under v0.1 the VIX alone). The
+# newest months are left out because some of their indicators are not
+# published yet.
+ai_complete <- panel %>%
+  filter(month %in% bis_windows$month[bis_windows$window == "ai"],
+         !is.na(V), !is.na(L), !is.na(S), !is.na(C),
+         !is.na(s_vix_adj), BIS_VERSION == "v0.1" | !is.na(s_gpr_adj))
+stopifnot("the AI window has no month with all four pillars and both sentiment indicators" =
+            nrow(ai_complete) > 0)
+ai_signature <- max(ai_complete$month)
+message("  AI-era signature month: ", ai_signature)
+
 # ---- Check against the v0.1 prototype -----------------------------------------------------
 # The anchors were recorded from the one-indicator-per-pillar prototype, so
 # they are compared with the v0.1 pillars under either BIS_VERSION. PASS =

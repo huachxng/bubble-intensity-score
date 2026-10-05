@@ -10,7 +10,9 @@ message("\n== 05 backtest and sensitivity (", BIS_VERSION, ")")
 # 3. GFC: the leverage pillar peaks within +/- 12 months of 2007-08
 #    (BNP Paribas freezes its funds, 2007-08-09).
 # 4. GFC: the composite BIS stays below +1.5 before the crash.
-# 5. AI era: reported, not scored; the outcome is not known.
+# 5. AI era: reported, not scored; the outcome is not known. The row gives the
+#    reading at the AI era's signature month (04_bis.R) and the highest
+#    reading in the window.
 
 # Peak value of one column in a window, and its month.
 peak_of <- function(df, col) {
@@ -39,6 +41,7 @@ pk_dot   <- peak_of(win("dotcom"), "BIS")
 pk_gfc_L <- peak_of(win("gfc"),    "L")
 pk_ai    <- peak_of(win("ai"),     "BIS")
 gfc_max  <- safe_max(win("gfc")$BIS)
+ai_now   <- win("ai") %>% filter(month == ai_signature)
 
 # isTRUE() turns a missing value into FAIL instead of an error.
 scorecard <- tibble::tribble(
@@ -66,7 +69,8 @@ scorecard <- tibble::tribble(
 
   "5. AI era (reported, not scored)",
   "-",
-  paste0(pk_ai$month, " (", sprintf("%+0.2f", pk_ai$value), ")"),
+  paste0(ai_signature, " (", sprintf("%+0.2f", ai_now$BIS), "); window max ",
+         pk_ai$month, " (", sprintf("%+0.2f", pk_ai$value), ")"),
   "n/a"
 )
 

@@ -48,11 +48,14 @@ DANGER_LINE <- 1.5        # warning threshold drawn on the BIS charts
 NFCI_SIGN <- 1
 
 # ---- Analysis windows -------------------------------------------------------
+# The AI window opens with the launch of ChatGPT (2022-11-30) and has no end
+# date. Up to v1.1.0 it opened in 2019-01, which put the index's 2020 warning
+# (August and December 2020, the pandemic period) inside the AI era.
 WINDOWS <- tibble::tribble(
   ~name,    ~start,    ~end,      ~ref_month, ~ref_event,
   "dotcom", "1995-01", "2003-12", "2000-03",  "Nasdaq peak, 2000-03-10",
   "gfc",    "2003-01", "2010-12", "2007-08",  "BNP Paribas freeze, 2007-08-09",
-  "ai",     "2019-01", NA,        NA,         "out-of-sample - no known outcome"
+  "ai",     "2022-11", NA,        NA,         "out-of-sample - no known outcome"
 )
 
 # ---- v0.1 anchors -----------------------------------------------------------

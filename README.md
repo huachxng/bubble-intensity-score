@@ -48,6 +48,20 @@ The tables it writes match the files committed in `output/`; on some computers t
 
 The run also prints a hand check for March 2000: the number of CAPE values in the trailing window, their mean and population standard deviation, the resulting z-score, and the four pillars with their average, so the reading can be redone on a calculator. After `source("run_all.R")` in R, `hand_check("2008-09")` repeats it for any month.
 
+## The three analysis windows
+
+| Window | Months | Signature month in the comparison table and Figure 3 |
+|---|---|---|
+| Dot-com | 1995-01 to 2003-12 | the composite's peak (February 2000) |
+| GFC | 2003-01 to 2010-12 | the leverage pillar's peak (December 2007) |
+| AI era | 2022-11 to the newest month | the latest month with all four pillars and both sentiment indicators (June 2026) |
+
+The windows are set in `WINDOWS` in `R/00_setup.R`. The AI window opens with the launch of ChatGPT on 30 November 2022.
+
+The AI era is not over, so it has no peak to report. Its row in the comparison table is the latest month in which all four pillars have a value and the sentiment pillar has both the VIX and the GPR. With the paper's data that month is June 2026: July 2026 has no GPR value, and August 2026 has no GPR and no concentration value. The rule is computed in `R/04_bis.R`, not typed in. The NFCI leverage file ends in April 2026, so in June 2026 the leverage pillar rests on corporate debt growth alone.
+
+The index was at or above its +1.5 warning line in August 2020 (+1.57) and December 2020 (+1.63), the only such months outside 1999 to 2000. They fall in the pandemic period, before the AI window opens, and no output counts them as part of the AI era. They are in `bis_panel_monthly.csv`, they are "BIS episode 2" in `fama_forecast_test.csv`, and Figure 1 labels the December 2020 peak.
+
 ## Newer data: the refresh run
 
 ```
@@ -68,6 +82,8 @@ How the refresh gets its data:
 - Corporate debt is quarterly and is published about ten weeks after a quarter ends, so its last published quarter is carried forward to the newest month.
 
 Refreshed results will differ from the paper. New months are added at the end, and the sources revise their history: GPR revises recent months, multpl.com revises recent CAPE values as earnings are reported, and each quarterly Z.1 release revises corporate debt. In a test refresh on 29 September 2026 (FRED was unreachable, so a Nasdaq file from Yahoo Finance and the paper's corporate debt file were supplied by hand), the sentiment pillar changed from April 2025 on and valuation from May 2026 on, the composite moved by up to 0.21, and all Dot-com and GFC results stayed the same. The Chicago Fed's NFCI file still ended in April 2026, so the leverage pillar used corporate debt alone after that month.
+
+In a refresh the AI window runs to the newest month, and its row in the comparison table moves to the newest month that has all four pillars and both sentiment indicators.
 
 ## Index versions and the prototype check
 
@@ -117,18 +133,35 @@ The raw VIX, Nasdaq, multpl.com and GPR files are not redistributed here; the re
 |---|---|
 | `bis_panel_monthly.csv` | Every monthly reading: indicator z-scores, pillars and the BIS (Chapters 4 to 6, Figure 1) |
 | `bis_windows.csv` | The three analysis windows (Figures 2a to 2c); the run prints their Section 4.5 descriptive statistics |
-| `backtest_scorecard.csv` | Section 5.1 scorecard, Table B3 |
-| `bis_comparison_table.csv` | Section 5.5 three-way comparison, Figure 3 |
+| `backtest_scorecard.csv` | Section 5.1 scorecard, Table B3. Row 5 gives the AI era's reading at its signature month and the highest reading in the window |
+| `bis_comparison_table.csv` | Section 5.5 three-way comparison, Figure 3: one row per window at its signature month |
 | `sensitivity.csv` | Section 5.6 weighting table, Table B1 |
 | `lookback_sensitivity.csv` | Table B2 (the Dot-com rows) |
 | `gpr_variance_test.csv` | Section 5.6, the sentiment upgrade |
-| `fama_forecast_test.csv` | Sections 2.4 and 5.4, Fama's forecast-date test |
+| `fama_forecast_test.csv` | Sections 2.4 and 5.4, Fama's forecast-date test. Episode 1 is the Dot-com warning, episode 2 the 2020 warning |
 | `anchor_check.csv` | Section 4.6, the check against the prototype |
 | `figures/fig_bis_history.png` | Figure 1 |
 | `figures/fig_pillars_dotcom.png`, `fig_pillars_gfc.png`, `fig_pillars_ai.png` | Figures 2a, 2b, 2c |
 | `figures/fig_threeway.png` | Figure 3 |
 | `figures/fig_sentiment_v2.png` | Figure 4 |
 | `figures/fig_catalyst_timeline.png` | The S&P 500 with three external triggers (Section 2.3); not a numbered figure |
+
+The window peaks in `sensitivity.csv`, `lookback_sensitivity.csv` and row 5 of the scorecard use every month of a window. For the AI window that includes July and August 2026, whose readings rest on fewer indicators: the highest reading in the window, +0.94 in August 2026, is the mean of three pillars.
+
+## Changes in v1.2.0
+
+The AI window now starts in November 2022, the month ChatGPT was launched. Up to v1.1.0 it started in January 2019, which put the index's 2020 readings, taken during the pandemic, inside the AI era. The change follows an advisor's review of the paper. The method, the data, the Dot-com and GFC windows and the five criteria are the same as in v1.1.0.
+
+- `R/00_setup.R`: the AI window starts in `2022-11`.
+- `R/04_bis.R`: computes the AI era's signature month, the latest month with all four pillars and both sentiment indicators (June 2026 with the paper's data).
+- `R/05_backtest.R`: row 5 of the scorecard reports the reading at that month and the highest reading in the window. Criterion 5 was reported, not scored, so criteria 1 to 4 and their results are unchanged.
+- `R/06_figures.R`: the shaded bands of Figure 1 are read from `WINDOWS`, Figure 1 labels the December 2020 peak as pandemic-era, and Figure 3 and the comparison table take the AI era at its signature month. Up to v1.1.0 they took it at the window's peak, December 2020.
+
+Outputs that changed: `bis_windows.csv` (the AI rows now run from 2022-11; the 46 rows from 2019-01 to 2022-10 are gone), the AI row of `bis_comparison_table.csv`, row 5 of `backtest_scorecard.csv`, the AI rows of `sensitivity.csv`, `lookback_sensitivity.csv` and `gpr_variance_test.csv`, and the figures `fig_bis_history.png`, `fig_pillars_ai.png` and `fig_threeway.png`.
+
+Outputs that did not change: `bis_panel_monthly.csv`, `anchor_check.csv`, `fama_forecast_test.csv`, every Dot-com and GFC row of every table, and the other four figures.
+
+One result changed direction. Over the new AI window, adding the GPR to the sentiment pillar raises the pillar's standard deviation (0.54 with the VIX alone, 0.66 with both) where it lowered it over the old window (1.06 to 0.91). The difference comes from the months since the geopolitical escalation of March 2026: through February 2026 the standard deviation falls, from 0.54 to 0.48. The GPR still lowers it in the Dot-com and GFC windows, so it does so in two of the three windows.
 
 ## Limitations
 

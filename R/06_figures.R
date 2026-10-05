@@ -4,6 +4,7 @@
 message("\n== 06 figures (", BIS_VERSION, ")")
 
 as_date <- function(m) as.Date(paste0(m, "-01"))
+month_label <- function(m) paste(month.abb[as.integer(substr(m, 6, 7))], substr(m, 1, 4))
 
 PAL <- c(V = "#c1121f", L = "#0b3954", S = "#7209b7", C = "#f77f00")
 THEME <- theme_minimal(base_size = 11) +
@@ -18,11 +19,27 @@ save_fig <- function(p, name, w = 10, h = 5.5) {
   message("  wrote ", path)
 }
 
+# Shaded bands of Figure 1: the three analysis windows, read from WINDOWS.
 EPISODES <- tibble(
   label = c("Dot-com", "GFC", "AI era"),
-  xmin  = as_date(c("1995-01", "2003-01", "2019-01")),
-  xmax  = as_date(c("2003-12", "2010-12", max(panel$month)))
+  xmin  = as_date(WINDOWS$start),
+  xmax  = as_date(coalesce(WINDOWS$end, max(panel$month)))
 )
+
+# The 2020 warning (the months of 2020 at or above the danger line) lies
+# between the GFC and AI windows. Its peak is labelled on Figure 1 so that it
+# is not read as part of the AI era. The v0.1 index has no such month and
+# gets no label (adding NULL to a plot changes nothing).
+pk_2020 <- panel %>%
+  filter(substr(month, 1, 4) == "2020", BIS >= DANGER_LINE) %>%
+  slice_max(BIS, n = 1, with_ties = FALSE)
+
+label_2020 <- NULL
+if (nrow(pk_2020) == 1) {
+  label_2020 <- annotate("text", x = as_date(pk_2020$month), y = pk_2020$BIS + .12,
+                         label = paste0("pandemic-era peak, ", month_label(pk_2020$month)),
+                         hjust = 1, size = 3.1, colour = "grey35")
+}
 
 # ---- Figure 1: the BIS since 1995 ----------------------------------------------
 p1 <- panel %>%
@@ -38,6 +55,7 @@ p1 <- panel %>%
   annotate("text", x = as_date("1995-06"), y = DANGER_LINE + .12,
            label = paste0("danger line +", DANGER_LINE),
            hjust = 0, size = 3.1, colour = PAL["V"]) +
+  label_2020 +
   labs(title = "Bubble Intensity Score, 1995-present",
        subtitle = paste0(BIS_VERSION, " - equal-weighted mean of four trailing ",
                          Z_WINDOW, "-month pillar z-scores"),
@@ -68,9 +86,11 @@ for (nm in WINDOWS$name) {
 }
 
 # ---- Figure 3: the three-way comparison ----------------------------------------
-# Signature month: the BIS peak for Dot-com and the AI era, the leverage
-# pillar's peak for the GFC.
+# Signature month: the BIS peak for Dot-com, the leverage pillar's peak for
+# the GFC, and for the AI era the latest month with all four pillars and both
+# sentiment indicators (ai_signature, from 04_bis.R).
 signature_month <- function(nm) {
+  if (nm == "ai") return(ai_signature)
   d <- bis_windows %>% filter(window == nm)
   if (nm == "gfc") which_max_month(d$month, d$L) else which_max_month(d$month, d$BIS)
 }
@@ -85,7 +105,6 @@ readr::write_csv(threeway, file.path(DIR_OUT, "bis_comparison_table.csv"))
 cat("\n--- three-way comparison ---\n"); print(threeway %>% select(-window))
 
 EPISODE_LABELS <- c(dotcom = "Dot-com", gfc = "GFC", ai = "AI era")   # chronological order
-month_label <- function(m) paste(month.abb[as.integer(substr(m, 6, 7))], substr(m, 1, 4))
 
 p3 <- threeway %>%
   mutate(panel_label = factor(EPISODE_LABELS[window], levels = EPISODE_LABELS)) %>%
@@ -101,7 +120,8 @@ p3 <- threeway %>%
        subtitle = paste0("Pillar z-scores at each episode's signature month: ",
                          paste(EPISODE_LABELS[threeway$window], month_label(threeway$month),
                                collapse = ", ")),
-       caption = "Signature month: the composite's peak for Dot-com and the AI era, the leverage pillar's peak for the GFC.",
+       caption = paste0("Signature month: the composite's peak for Dot-com, the leverage pillar's peak for the GFC,\n",
+                        "the latest month with all four pillars and both sentiment indicators for the AI era."),
        x = NULL, y = "z-score") +
   THEME
 save_fig(p3, "fig_threeway.png", w = 10, h = 4.5)

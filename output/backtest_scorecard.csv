@@ -3,4 +3,4 @@ criterion,target,observed,result
 2. Dot-com peak above 90th percentile,>= 90,100th,PASS
 3. GFC leverage pillar peaks within +/-12m of 2007-08,|lead/lag| <= 12,2007-12 (+2.11),PASS
 4. GFC composite stays below +1.5 pre-crash,< 1.5,+0.43,PASS
-"5. AI era (reported, not scored)",-,2020-12 (+1.63),n/a
+"5. AI era (reported, not scored)",-,2026-06 (+0.78); window max 2026-08 (+0.94),n/a
