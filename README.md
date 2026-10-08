@@ -184,7 +184,7 @@ Advisors:
 
 GitHub's "Cite this repository" button uses `CITATION.cff`. In text:
 
-Tejahempinyo, S. (2026). *The Bubble Intensity Score: A Composite Index for Situating the AI Market Among Historical Bubbles*. Working paper. Code and data: https://github.com/huachxng/bubble-intensity-score
+Tejahempinyo, S. (2026). *The Bubble Intensity Score: A Composite Index for Situating the AI Market Among Historical Bubbles* [Working paper]. SSRN. https://doi.org/10.2139/ssrn.7569199. Code and data: https://github.com/huachxng/bubble-intensity-score
 
 Please also cite the data sources listed above. The GPR authors ask that the download date be cited.
 
